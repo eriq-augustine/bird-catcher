@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project basedir="." default="build" name="twitter">
+   <property name="debuglevel" value="source,lines,vars"/>
+   <property name="target" value="1.7"/>
+   <property name="source" value="1.7"/>
+
+   <path id="twitter.classpath">
+      <pathelement location="bin"/>
+      <pathelement location="lib/commons-codec.jar"/>
+      <pathelement location="lib/commons-collections-3.1.jar"/>
+      <pathelement location="lib/commons-configuration-1.6.jar"/>
+      <pathelement location="lib/commons-lang-2.6.jar"/>
+      <pathelement location="lib/commons-logging-1.1.1.jar"/>
+      <pathelement location="lib/guava-11.0.1.jar"/>
+      <pathelement location="lib/JSON.jar"/>
+      <pathelement location="lib/javassist-3.12.0.GA.jar"/>
+      <pathelement location="lib/jta-1.1.jar"/>
+      <pathelement location="lib/junit-4.10.jar"/>
+      <pathelement location="lib/slf4j-api-1.6.1.jar"/>
+   </path>
+
+   <target name="doc">
+      <mkdir dir="doc"/>
+      <javadoc access="private" destdir="doc" use="true" windowtitle="Bird Catcher">
+         <fileset dir="src" />
+         <classpath refid="twitter.classpath"/>
+         <tag name=".pre" scope="all" description="Precondition:"/>
+         <tag name=".post" scope="all" description="Postcondition:"/>
+         <link href="http://download.oracle.com/javase/6/docs/api"/>
+      </javadoc>
+   </target>
+
+   <target name="init">
+      <mkdir dir="bin"/>
+      <copy includeemptydirs="false" todir="bin">
+         <fileset dir="src">
+            <exclude name="**/*.launch"/>
+            <exclude name="**/*.java"/>
+         </fileset>
+      </copy>
+   </target>
+
+   <target name="clean">
+      <delete dir="bin"/>
+   </target>
+
+   <target name="clean-doc">
+      <delete dir="doc"/>
+   </target>
+
+   <target name="clean-all">
+      <delete dir="bin"/>
+      <delete dir="doc"/>
+   </target>
+
+   <target depends="clean" name="cleanall"/>
+
+   <target depends="build-subprojects,build-project" name="build"/>
+
+   <target name="build-subprojects"/>
+
+   <target depends="init" name="build-project">
+      <echo message="${ant.project.name}: ${ant.file}"/>
+      <javac debug="true" debuglevel="${debuglevel}" includeantruntime="false" destdir="bin" source="${source}" target="${target}">
+         <src path="src:test"/>
+         <classpath refid="twitter.classpath"/>
+         <compilerarg value="-Xlint"/>
+         <compilerarg value="-Xlint:deprecation"/>
+      </javac>
+   </target>
+
+   <target name="test" depends="build" description="Run all the JUnit tests.">
+      <echo message="Running all tests." />
+      <junit showoutput="true" printsummary="yes" fork="yes">
+         <formatter type="brief" usefile="false"/>
+         <classpath refid="twitter.classpath"/>
+         <batchtest fork="yes">
+            <fileset dir="test">
+               <include name="**/*JTest.java"/>
+            </fileset>
+         </batchtest>
+      </junit>
+   </target>
+
+   <target name="ensure-test-name" unless="test">
+      <fail message="You must run this target with -Dtest=TestName"/>
+   </target>
+
+   <target name="runtest" description="Runs the test you specify on the command line with -Dtest=" depends="build, ensure-test-name">
+      <junit showoutput="true" printsummary="yes" fork="yes">
+         <classpath refid="twitter.classpath" />
+         <formatter type="brief" usefile="false"/>
+         <batchtest fork="yes">
+            <fileset dir="test">
+               <include name="**/${test}.java"/>
+            </fileset>
+         </batchtest>
+      </junit>
+   </target>
+
+   <!-- checkstyle -->
+   <taskdef resource="checkstyletask.properties" classpath="./tools/checkstyle-5.6-all.jar" />
+   <target name="checkstyle" description="Check some style">
+      <checkstyle config="tools/google_style.xml">
+         <fileset dir="src/edu/calpoly" includes="**/*.java" />
+         <formatter type="plain"/>
+      </checkstyle>
+   </target>
+
+   <!-- alias style -->
+   <target name="style" depends="checkstyle" />
+
+   <!-- lint4j -->
+   <taskdef name="lint4j" classname="com.jutils.lint4j.ant.Lint4jAntTask">
+      <classpath>
+         <pathelement location="tools/lint4j.jar" />
+      </classpath>
+   </taskdef>
+
+   <target name="lint" description="Lint check.">
+      <lint4j sourcepath="src" packages="edu.calpoly.*" level="2">
+         <classpath refid="twitter.classpath"/>
+      </lint4j>
+   </target>
+
+   <!-- alias lint4j -->
+   <target name="lint4j" depends="lint" />
+</project>
